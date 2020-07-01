@@ -1,3 +1,10 @@
 __pycache__/
 .mypy_cache/
+.vscode/
+.pytest_cache/
 venv/
+pylox.egg-info/
+poetry.lock
+.history/
+test.lox
+.idea

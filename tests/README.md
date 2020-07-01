@@ -1,0 +1,1 @@
+These are a couple of tests for the functions. These tests may not work. For testing the interpreter itself, see the [tests in the crafting interpreters repo](https://github.com/munificent/craftinginterpreters/tree/master/test).
