@@ -170,7 +170,7 @@ def to_fun(
     parens = tuple(sp.parens(i_tokens))
     if not tu.paren_check(parens):
         return stmt.ErrorStmt()
-    arguments = tuple(ep.function_args(parens[2:-1], tt.IDENTIFIER))
+    arguments = tuple(ep.function_def_args(parens[2:-1]))
     if any(arg is None for arg in arguments):
         return stmt.ErrorStmt()
     body = to_meta_dec(tuple(i_tokens))

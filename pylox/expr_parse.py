@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import functools
 import typing as tp
+
+from more_itertools import peekable
+
 import pylox.abstract_execs as ae
 import pylox.lox_errors as le
 import pylox.lox_ops as lo
@@ -43,8 +46,8 @@ def primary(tokens: tc.TokenSeq) -> ae.Expr:
 
 
 # TODO: Fix edge cases
-def function_args(
-    tokens: tp.Iterable[tc.Token], required_type: tp.Optional[tt] = None,
+def function_def_args(
+    tokens: tp.Iterable[tc.Token],
 ) -> tp.Iterator[tp.Optional[tc.Token]]:
     split_tokens = tu.specified_token_split(tokens, tt.COMMA)
     for i, argument in enumerate(split_tokens):
@@ -53,18 +56,22 @@ def function_args(
             break
         if mu.get(argument, 1) is not None:  # type: ignore
             error(argument[1].line, "Only a singular name is allowed")
-        elif (
-            required_type is None and argument.peek(tc.sentinel_token).type is tt.EMPTY
-        ) and argument.peek(tc.sentinel_token).type is not required_type:
-            next_t = argument.peek(tc.sentinel_token)
+        elif argument.peek(tc.sentinel_token).type is not tt.IDENTIFIER:
+            next_t = next(argument, tc.sentinel_token)
             error(
                 next_t.line if next_t.type is not tt.EMPTY else "unknown",
                 "Expect parameter name.",
             )
-        elif argument:
+        else:
             yield argument[0]
             continue
         yield None
+
+
+def function_call_args(tokens: tp.Iterable[tc.Token],) -> tp.Iterator[ae.Expr]:
+    return (
+        expression(tuple(arg)) for arg in tu.specified_token_split(tokens, tt.COMMA)
+    )
 
 
 CallIncrements: tp.Dict[tt, int] = {tt.DOT: 3, tt.RIGHT_PAREN: 2, tt.LEFT_PAREN: 1}
@@ -81,20 +88,14 @@ def call(tokens: tc.TokenSeq) -> ae.Expr:
     for paren_index in tu.token_find_index(tokens, {tt.RIGHT_PAREN, tt.DOT}):
         if tokens[paren_index].type is tt.RIGHT_PAREN:
             args = tuple(
-                function_args(
+                function_call_args(
                     tokens[
                         last_paren
                         + CallIncrements[tokens[last_paren].type] : paren_index
-                    ]
+                    ],
                 )
             )
-            if any(arg is None for arg in args):
-                return expr.ErrorExpr()
-            lox_function = expr.Call(
-                lox_function,
-                tokens[paren_index],
-                [primary([tp.cast(tc.Token, x)]) for x in args],
-            )
+            lox_function = expr.Call(lox_function, tokens[paren_index], args)
         elif tokens[paren_index - 1].type is not tt.SUPER:
             lox_function = expr.Get(lox_function, tokens[paren_index + 1])
         last_paren = paren_index
