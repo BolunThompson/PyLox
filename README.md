@@ -1,7 +1,7 @@
 # Pylox
 
 Pylox is an interpreter of the Lox programming language (from the book Crafting Interpreters) written in Python.
-While the interpreter should work, it may have bugs.
+While the interpreter should work, it defintely has bugs.
 
 # Requirements:
 
